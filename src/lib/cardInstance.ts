@@ -4,12 +4,21 @@
  * Guarantees that remixed websites in AI Studio never overlap or overwrite data from other websites.
  */
 
-export const MASTER_CARD_ID = 'remix-v1';
-export const ORIGINAL_APPLET_SUBDOMAIN = 'zu6oj4k573mqstevuaebw5';
+/**
+ * cardInstance.ts
+ * Manages unique database identification, remix isolation, and hosting synchronization.
+ * Guarantees that deployments (Vercel, custom domains, AI Studio) always load
+ * the active, canonical wedding invitation.
+ */
+
+export const CANONICAL_CARD_ID = 'remix-n6o7jcyhxftehzum27yso7';
+export const MASTER_CARD_ID = 'remix-n6o7jcyhxftehzum27yso7';
+export const FALLBACK_CARD_ID = 'remix-v1';
+export const CURRENT_APPLET_SUBDOMAIN = 'n6o7jcyhxftehzum27yso7';
 
 /**
  * Detects the AI Studio applet subdomain from window.location.hostname
- * e.g. "ais-dev-zu6oj4k573mqstevuaebw5-18224007398.asia-east1.run.app" -> "zu6oj4k573mqstevuaebw5"
+ * e.g. "ais-dev-n6o7jcyhxftehzum27yso7-18224007398.asia-east1.run.app" -> "n6o7jcyhxftehzum27yso7"
  */
 export function detectAppletSubdomain(): string | null {
   if (typeof window === 'undefined' || !window.location) return null;
@@ -20,16 +29,17 @@ export function detectAppletSubdomain(): string | null {
 
 /**
  * Determines the appropriate card/database ID for the current instance.
- * Follows strict priority to ensure remixes never overwrite each other:
+ * Priority:
  * 1. URL search param ?id=... (or ?remix=... or ?card=...)
- * 2. If running on AI Studio:
- *    - If subdomain matches the original applet (zu6oj4k573mqstevuaebw5), use MASTER_CARD_ID ('remix-v1')
- *    - If subdomain is different (this is an AI Studio Remix!), use `remix-${subdomain}`
- * 3. Custom ID previously saved in localStorage
- * 4. Fallback based on host
+ * 2. Vite environment variable: VITE_CARD_ID (for Vercel or custom deployments)
+ * 3. AI Studio preview subdomain:
+ *    - If running on this applet's subdomain, use CANONICAL_CARD_ID
+ *    - If running on another AI Studio remix, use `remix-${subdomain}`
+ * 4. Production hosting (Vercel, Netlify, custom domain, localhost):
+ *    - Always loads CANONICAL_CARD_ID so all visitors and guests see the configured invitation!
  */
 export function determineInitialCardId(): string {
-  if (typeof window === 'undefined') return MASTER_CARD_ID;
+  if (typeof window === 'undefined') return CANONICAL_CARD_ID;
 
   // 1. Explicit URL parameter always wins
   try {
@@ -42,40 +52,25 @@ export function determineInitialCardId(): string {
     console.warn('Error reading URL search params:', e);
   }
 
-  // 2. AI Studio applet subdomain detection
+  // 2. Explicit environment variable (if configured in Vercel project settings)
+  try {
+    const envCardId = (import.meta as any).env?.VITE_CARD_ID;
+    if (envCardId && typeof envCardId === 'string' && envCardId.trim() !== '') {
+      return envCardId.trim();
+    }
+  } catch (e) {
+    // Ignore env read error
+  }
+
+  // 3. AI Studio applet subdomain detection
   const subdomain = detectAppletSubdomain();
   if (subdomain) {
-    if (subdomain === ORIGINAL_APPLET_SUBDOMAIN.toLowerCase()) {
-      return MASTER_CARD_ID;
-    }
-    // This is an AI Studio REMIX! Give it a dedicated, isolated ID
     return `remix-${subdomain}`;
   }
 
-  // 3. Local instance ID stored in browser
-  try {
-    const storedInstanceId = localStorage.getItem('wedding_custom_card_id');
-    if (storedInstanceId && storedInstanceId.trim() !== '') {
-      return storedInstanceId.trim();
-    }
-  } catch (e) {
-    console.warn('Error reading wedding_custom_card_id from localStorage:', e);
-  }
-
-  // 4. Default for localhost or unknown domain
-  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  if (isLocal) {
-    return MASTER_CARD_ID;
-  }
-
-  // Generate a random stable instance ID for this domain/browser session
-  const randomInstanceId = `remix-${Math.random().toString(36).substring(2, 9)}`;
-  try {
-    localStorage.setItem('wedding_custom_card_id', randomInstanceId);
-  } catch (e) {
-    // Ignore storage quota
-  }
-  return randomInstanceId;
+  // 4. Default for Vercel, Netlify, custom domains, or localhost
+  // Return CANONICAL_CARD_ID so all wedding guests see the active wedding card!
+  return CANONICAL_CARD_ID;
 }
 
 /**

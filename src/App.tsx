@@ -5,7 +5,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { ECardSettings, defaultSettings } from './types';
 import { saveLargeFile, loadLargeFile } from './lib/storage';
-import { determineInitialCardId, getFromLocalStorage, saveToLocalStorage, MASTER_CARD_ID } from './lib/cardInstance';
+import { determineInitialCardId, getFromLocalStorage, saveToLocalStorage, MASTER_CARD_ID, CANONICAL_CARD_ID, FALLBACK_CARD_ID } from './lib/cardInstance';
 import { OpeningPage } from './components/OpeningPage';
 import { HeroSection } from './components/HeroSection';
 import { AdminPanel } from './components/AdminPanel';
@@ -59,19 +59,31 @@ export default function App() {
           dataToUse = docSnap.data();
           console.log(`Loaded data from Firestore for card: ${cardId}`);
         } else {
-          // If no document exists for this cardId (e.g. this is a newly created REMIX!):
-          console.log(`Card document '${cardId}' not found. Loading template from master '${MASTER_CARD_ID}'...`);
+          // If no document exists for this cardId:
+          console.log(`Card document '${cardId}' not found. Loading template from master '${CANONICAL_CARD_ID}'...`);
           isNewRemixDoc = true;
 
-          if (cardId !== MASTER_CARD_ID) {
+          // Try loading canonical template first
+          try {
+            const canonicalSnap = await getDoc(doc(db, 'wedding_invitations', CANONICAL_CARD_ID));
+            if (canonicalSnap.exists()) {
+              dataToUse = canonicalSnap.data();
+              console.log(`Successfully loaded canonical data from ${CANONICAL_CARD_ID}`);
+            }
+          } catch (err) {
+            console.warn(`Could not load canonical template ${CANONICAL_CARD_ID}:`, err);
+          }
+
+          // Fallback to FALLBACK_CARD_ID if needed
+          if (!dataToUse) {
             try {
-              const masterSnap = await getDoc(doc(db, 'wedding_invitations', MASTER_CARD_ID));
-              if (masterSnap.exists()) {
-                dataToUse = masterSnap.data();
-                console.log(`Successfully cloned template data from ${MASTER_CARD_ID} into remix ${cardId}`);
+              const fallbackSnap = await getDoc(doc(db, 'wedding_invitations', FALLBACK_CARD_ID));
+              if (fallbackSnap.exists()) {
+                dataToUse = fallbackSnap.data();
+                console.log(`Successfully loaded fallback data from ${FALLBACK_CARD_ID}`);
               }
             } catch (err) {
-              console.warn(`Could not load master template ${MASTER_CARD_ID}:`, err);
+              console.warn(`Could not load fallback template ${FALLBACK_CARD_ID}:`, err);
             }
           }
 
@@ -286,6 +298,17 @@ export default function App() {
       console.log("Large strings in doc:", Object.entries(cleanSettings).filter(([k,v]) => typeof v === 'string' && (v as string).length > 5000).map(([k,v]) => k));
       console.log("Events:", cleanSettings.eventDetails?.map((e: any) => e.heading));
       await setDoc(doc(db, 'wedding_invitations', cardId), cleanSettings);
+
+      // Mirror to canonical IDs so all deployments (Vercel, custom domain, AI Studio) stay perfectly in sync
+      const mirrorIds = Array.from(new Set([CANONICAL_CARD_ID, FALLBACK_CARD_ID, 'default'])).filter(id => id !== cardId);
+      for (const mirrorId of mirrorIds) {
+        try {
+          await setDoc(doc(db, 'wedding_invitations', mirrorId), cleanSettings);
+        } catch (e) {
+          // Ignore mirror failure
+        }
+      }
+
       saveToLocalStorage(cardId, cleanSettings);
         } catch (error: any) {
           console.warn('Error saving settings to Firestore, falling back to local storage:', error.message);
@@ -347,6 +370,16 @@ export default function App() {
         savePromise,
         new Promise((_, reject) => setTimeout(() => reject(new Error("Database save timed out. Please check your internet connection.")), 15000))
       ]);
+
+      // Mirror to canonical IDs so all deployments stay in sync
+      const mirrorIds = Array.from(new Set([CANONICAL_CARD_ID, FALLBACK_CARD_ID, 'default'])).filter(id => id !== cardId);
+      for (const mirrorId of mirrorIds) {
+        try {
+          await setDoc(doc(db, 'wedding_invitations', mirrorId), cleanSettings);
+        } catch (e) {
+          // Ignore mirror failure
+        }
+      }
     } catch (error: any) {
       console.error('Error saving settings to Firestore on exit:', error);
       alert("Error saving to database: " + error.message + "\n\nFiles may have been too large or network disconnected.");
