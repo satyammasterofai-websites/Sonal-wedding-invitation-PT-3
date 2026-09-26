@@ -127,8 +127,8 @@ export function HeroSection({ settings, onOpenAdmin }: Props) {
                   <div className="absolute inset-0 bg-black/30 sm:bg-gradient-to-r sm:from-black/60 sm:via-black/40 sm:to-transparent pointer-events-none"></div>
                   
                   {/* Text Content */}
-                  <div className="absolute top-0 h-[60%] sm:h-auto left-0 right-0 flex flex-col justify-center items-center text-center px-6 z-10 sm:bottom-0 sm:w-1/2 sm:items-start sm:text-left sm:pl-12 md:pl-16 pt-6 sm:pt-0">
-                    <h3 className="text-[42px] leading-tight md:text-6xl font-['Great_Vibes',cursive] text-[#FAF5EA] mb-2 drop-shadow-md">
+                  <div className="absolute top-8 sm:top-0 h-[60%] sm:h-auto left-0 right-0 flex flex-col justify-center items-center text-center px-6 z-10 sm:bottom-0 sm:w-1/2 sm:items-start sm:text-left sm:pl-12 md:pl-16 pt-8 sm:pt-6">
+                    <h3 className="text-[42px] leading-tight md:text-6xl font-['Great_Vibes',cursive] text-[#FAF5EA] mb-3 mt-2 sm:mt-0 drop-shadow-md">
                       {event.heading}
                     </h3>
                     {event.showDescription !== false && event.description && (
@@ -264,40 +264,62 @@ export function HeroSection({ settings, onOpenAdmin }: Props) {
             className="w-full max-w-3xl flex flex-col items-center"
           >
             <p className="font-serif tracking-[0.25em] text-[#8D2342] text-[10px] md:text-xs uppercase font-bold mb-5">
-              {settings.mapSubHeading || 'VENUE'}
+              {settings.mapSubHeading && settings.mapSubHeading.toLowerCase() === 'venue' ? settings.mapSubHeading : 'VENUE'}
             </p>
-            <h3 className="text-5xl md:text-6xl font-['Great_Vibes',cursive] text-[#8D2342] mb-8">
-              {settings.mapHeading || 'Where We Celebrate'}
+            <h3 className="text-5xl md:text-6xl font-['Great_Vibes',cursive] text-[#8D2342] mb-6">
+              {settings.mapHeading || 'Where we will Celebrate?'}
             </h3>
-            <p className="font-serif text-lg md:text-xl text-[#6B5A51] mb-12 max-w-sm leading-relaxed">
-              {settings.mapAddress || 'Royal Garden, Jaipur, Rajasthan'}
-            </p>
-            
-            {settings.showMap !== false && (
-              <div className="w-full rounded-[2rem] overflow-hidden shadow-[0_15px_40px_-15px_rgba(141,35,66,0.15)] border border-[#C9A15A]/30 aspect-square md:aspect-video relative mb-12 bg-[#F3EBE1]">
-                <iframe 
-                  width="100%" 
-                  height="100%" 
-                  frameBorder="0" 
-                  scrolling="no" 
-                  marginHeight={0} 
-                  marginWidth={0} 
-                  src={"https://maps.google.com/maps?q=" + encodeURIComponent(settings.mapAddress || 'Royal Garden, Jaipur, Rajasthan') + "&t=&z=14&ie=UTF8&iwloc=&output=embed"}
-                  title="Event Location Map"
-                  className="absolute top-0 left-0 w-full h-full grayscale-[20%] sepia-[10%]"
-                ></iframe>
-              </div>
-            )}
-            
-            <a
-              href={"https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(settings.mapAddress || 'Royal Garden, Jaipur, Rajasthan')}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-10 py-4 bg-[#8D2342] text-[#FAF5EA] rounded-full font-serif tracking-[0.15em] shadow-[0_8px_25px_-8px_rgba(141,35,66,0.6)] hover:shadow-[0_8px_30px_-5px_rgba(141,35,66,0.5)] hover:scale-[1.02] transition-all text-[11px] sm:text-xs uppercase font-bold flex items-center gap-3 border border-[#C9A15A]/20"
-            >
-              <MapPin className="w-4 h-4" />
-              Get Directions
-            </a>
+
+            {/* Separately Rendered Hotel Name & Address */}
+            {(() => {
+              const hotel = settings.hotelName?.trim() || (settings.mapSubHeading && settings.mapSubHeading !== 'VENUE' && settings.mapSubHeading !== 'Gr' ? settings.mapSubHeading.trim() : '');
+              const address = settings.mapAddress?.trim() || '';
+              const mapQuery = [hotel, address].filter(Boolean).join(', ') || 'Vone Pride, Premnagar, Dehradun';
+              const directionsLink = settings.googleMapUrl?.trim() || `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapQuery)}`;
+
+              return (
+                <>
+                  <div className="flex flex-col items-center mb-10 max-w-lg">
+                    {hotel && (
+                      <h4 className="font-serif text-2xl md:text-3xl text-[#8D2342] font-semibold mb-2 tracking-wide drop-shadow-sm">
+                        {hotel}
+                      </h4>
+                    )}
+                    {address && (
+                      <p className="font-serif text-base md:text-lg text-[#6B5A51] leading-relaxed whitespace-pre-line">
+                        {address}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {settings.showMap !== false && (
+                    <div className="w-full rounded-[2rem] overflow-hidden shadow-[0_15px_40px_-15px_rgba(141,35,66,0.15)] border border-[#C9A15A]/30 aspect-square md:aspect-video relative mb-12 bg-[#F3EBE1]">
+                      <iframe 
+                        width="100%" 
+                        height="100%" 
+                        frameBorder="0" 
+                        scrolling="no" 
+                        marginHeight={0} 
+                        marginWidth={0} 
+                        src={"https://maps.google.com/maps?q=" + encodeURIComponent(mapQuery) + "&t=&z=14&ie=UTF8&iwloc=&output=embed"}
+                        title="Event Location Map"
+                        className="absolute top-0 left-0 w-full h-full grayscale-[20%] sepia-[10%]"
+                      ></iframe>
+                    </div>
+                  )}
+                  
+                  <a
+                    href={directionsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-10 py-4 bg-[#8D2342] text-[#FAF5EA] rounded-full font-serif tracking-[0.15em] shadow-[0_8px_25px_-8px_rgba(141,35,66,0.6)] hover:shadow-[0_8px_30px_-5px_rgba(141,35,66,0.5)] hover:scale-[1.02] transition-all text-[11px] sm:text-xs uppercase font-bold flex items-center gap-3 border border-[#C9A15A]/20"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Get Directions
+                  </a>
+                </>
+              );
+            })()}
           </motion.div>
         </div>
 

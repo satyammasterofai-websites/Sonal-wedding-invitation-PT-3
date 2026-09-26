@@ -954,53 +954,76 @@ export function AdminPanel({ settings, setSettings, onExit, isExiting, cardId, s
                 );
               })()}
 
-              {/* Map Settings */}
+              {/* Map & Venue Settings */}
               <div className="pt-6 mt-6 border-t border-stone-200 space-y-6">
-                <h3 className="text-lg font-medium text-stone-800">Map Integration</h3>
+                <div>
+                  <h3 className="text-lg font-medium text-stone-800">Venue & Map Settings</h3>
+                  <p className="text-xs text-stone-500 mt-1">Configure hotel name, address, and Google Maps direction link.</p>
+                </div>
                 
                 <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex items-center justify-between">
-                  <label className="text-sm font-medium text-stone-800">Show Map Section</label>
+                  <div>
+                    <label className="text-sm font-medium text-stone-800 block">Show Map Section</label>
+                    <span className="text-xs text-stone-500">Toggle display of the interactive map and venue section</span>
+                  </div>
                   <input
                     type="checkbox"
                     name="showMap"
                     checked={settings.showMap !== false}
                     onChange={(e) => setSettings(prev => ({ ...prev, showMap: e.target.checked }))}
-                    className="h-4 w-4 text-stone-900 border-stone-300 rounded focus:ring-stone-900"
+                    className="h-4 w-4 text-stone-900 border-stone-300 rounded focus:ring-stone-900 cursor-pointer"
                   />
                 </div>
 
                 <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
-                  <label className="block text-sm font-medium text-stone-800">Map Heading</label>
+                  <label className="block text-sm font-medium text-stone-800">Section Heading</label>
                   <input
                     type="text"
                     name="mapHeading"
-                    value={settings.mapHeading || 'Where we Celebrate'}
+                    value={settings.mapHeading || ''}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md focus:ring-stone-900 focus:border-stone-900 sm:text-sm text-stone-600"
+                    placeholder="e.g. Where we will Celebrate?"
                   />
                 </div>
 
                 <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
-                  <label className="block text-sm font-medium text-stone-800">Map Sub-Heading (e.g. Hotel Name)</label>
+                  <label className="block text-sm font-medium text-stone-800">Hotel / Venue Name</label>
                   <input
                     type="text"
-                    name="mapSubHeading"
-                    value={settings.mapSubHeading || 'Grand Banquet Hall'}
+                    name="hotelName"
+                    value={settings.hotelName !== undefined ? settings.hotelName : (settings.mapSubHeading && settings.mapSubHeading !== 'VENUE' && settings.mapSubHeading !== 'Gr' ? settings.mapSubHeading : '')}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md focus:ring-stone-900 focus:border-stone-900 sm:text-sm text-stone-600"
+                    placeholder="e.g. Vone Pride, Premnagar"
                   />
+                  <p className="text-xs text-stone-400">The primary title of the venue, resort, or banquet hall.</p>
                 </div>
 
                 <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
-                  <label className="block text-sm font-medium text-stone-800">Map Address (Search Query)</label>
-                  <input
-                    type="text"
+                  <label className="block text-sm font-medium text-stone-800">Venue Address</label>
+                  <textarea
                     name="mapAddress"
-                    value={settings.mapAddress || 'Grand Banquet Hall, New York'}
+                    rows={2}
+                    value={settings.mapAddress || ''}
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md focus:ring-stone-900 focus:border-stone-900 sm:text-sm text-stone-600"
-                    placeholder="Enter the full address to show on the map"
+                    placeholder="e.g. Chakrata Road, Near Nanda Ki Chowki, Premnagar, Dehradun, Uttarakhand"
                   />
+                  <p className="text-xs text-stone-400">Full physical street address shown to guests and used for the map search query.</p>
+                </div>
+
+                <div className="space-y-3 bg-white p-4 rounded-xl border border-stone-100 shadow-sm">
+                  <label className="block text-sm font-medium text-stone-800">Google Map Link (For 'Get Directions' Button)</label>
+                  <input
+                    type="text"
+                    name="googleMapUrl"
+                    value={settings.googleMapUrl || ''}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-stone-200 rounded-md focus:ring-stone-900 focus:border-stone-900 sm:text-sm text-stone-600"
+                    placeholder="e.g. https://maps.app.goo.gl/xyz or https://goo.gl/maps/xyz"
+                  />
+                  <p className="text-xs text-stone-400">Direct Google Maps link. When guests tap 'Get Directions', this exact link will open. (If empty, it automatically generates directions to the Hotel & Address).</p>
                 </div>
               </div>
             </div>

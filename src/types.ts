@@ -52,7 +52,9 @@ export interface ECardSettings {
   sectionsBgColor?: string;
   mapHeading?: string;
   mapSubHeading?: string;
+  hotelName?: string;
   mapAddress?: string;
+  googleMapUrl?: string;
   showMap?: boolean;
   
   // New section options
@@ -198,8 +200,10 @@ export const defaultSettings: ECardSettings = {
   eventsHeadingColor: '#000000',
   sectionsBgColor: '#fdf2f8',
   mapHeading: 'Where we will Celebrate?',
-  mapSubHeading: 'Grand Vone Pride, Premnagar',
-  mapAddress: 'Dehradun ',
+  mapSubHeading: 'VENUE',
+  hotelName: 'Grand Vone Pride, Premnagar',
+  mapAddress: 'Chakrata Road, Near Nanda Ki Chowki, Premnagar, Dehradun, Uttarakhand',
+  googleMapUrl: '',
   showMap: true,
   invitationMessageHeading: 'Awaiting Your Noble Presence',
   invitationMessageBody: 'Because meeting two souls requires twice the joy — and you!',
